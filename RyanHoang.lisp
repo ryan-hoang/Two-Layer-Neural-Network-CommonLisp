@@ -65,21 +65,21 @@ o = sigmoid[w . h]
 The backpropagation rules are (in this order):
 
 odelta = (c - o) o (1 - o)
-hdelta = (h (1 - h) (tr[w] . odelta) )
+hdelta = (h (1 - h) (tr[w] . odelta))
 w = w + alpha (odelta . tr[h])
 v = v + alpha (hdelta . tr[i])
 
-Also for your enlightenment, the error metric ( 1/2 SUM_i (Ci - Oi)^2 )
+Also for your enlightenment, the error metric ( 1/2 SUM_i (Ci - Oi)^2)
 can be matrixified simply as:
 
-error =  0.5 ( tr[c - o] . (c - o) )
+error =  0.5 ( tr[c - o] . (c - o))
 
 ...of course error would be a 1x1 matrix -- you should be able to extract
-the number out of that.  :-)
+the number out of that.  :-
 
 odelta and hdelta are temporary matrix variables to simplify the
 equations for you.  You should be able to figure out what
-i, h, c, o, v, and w are.  :-) BE CAREFUL not to mix up
+i, h, c, o, v, and w are.  :- BE CAREFUL not to mix up
 matrix multiply with element-by-element multiply!
 
 Important hint: the matrix manipulation functions I have provided do NOT
@@ -88,7 +88,7 @@ which are mismatched size-wise, for example, the matrix multiply
 function will truncate each matrix until they *are* matched size-wise.
 Thus you should check to make sure that your matrices are coming out
 right.  One good hint is to make sure your W and V matrices don't
-change size after backpropagation!  :-)
+change size after backpropagation!  :-
 
 You will need to implement the following functions:
 
@@ -111,8 +111,8 @@ from within BACK-PROPAGATE.
 After you have implemented these functions, you will test them out on
 some data.  I have chosen several problems:
 
-1. XOR and NAND   (Well, actually EQUAL rather than XOR, but we'll
-pretend it's XOR -- they're isomorphic so it doesn't matter much).
+1. XOR and NAND   (Well, actually EQUAL rather than XOR, but we'll)
+pretend it's XOR -- they're isomorphic so it doesn't matter much.
 These are binary classification problems.
 
 2. Congressional Voting Records for 1984 -- to see if you can
@@ -158,9 +158,9 @@ A matrix as follows:
 
 ...takes the form:
 
-'( (2   3   7)
+'( (2   3   7))
 (6   2   4)
-(5   2   9) )
+(5   2   9)
 
 ...so it's in row-major order.  Traditionally, a matrix's elements
 are accessed as Wij,  where i is the ROW and j is the COLUMN.  Also,
@@ -173,7 +173,7 @@ I'm implementing matrices as lists of lists.  That includes vectors
 
 ...takes the form:
 
-'( (3   4   5) )
+'( (3   4   5))
 
 ...and the column vector
 
@@ -185,7 +185,7 @@ I'm implementing matrices as lists of lists.  That includes vectors
 
 '( (3)
   (5)
-  (9) )
+  (9))
 
 All the matrix manipulation functions I've given are non-destructive.
 
@@ -351,10 +351,10 @@ pretty efficient.  Returns the shuffled version of the list."
 
 (defun net-error (output correct-output)
   "Returns (as a scalar value) the error between the output and correct vectors"
-  (* 0.5
+  (first (first (scalar-multiply 0.5
     (multiply
           (transpose (subtract correct-output output))
-          (subtract correct-output output))))
+          (subtract correct-output output))))))
 
 
 ;; a single datum is of the form
