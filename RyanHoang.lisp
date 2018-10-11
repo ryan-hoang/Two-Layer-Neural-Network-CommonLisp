@@ -351,8 +351,10 @@ pretty efficient.  Returns the shuffled version of the list."
 
 (defun net-error (output correct-output)
   "Returns (as a scalar value) the error between the output and correct vectors"
-  (first (first (scalar-multiply 0.5
-    (multiply
+  (first
+    (first
+      (scalar-multiply 0.5
+        (multiply
           (transpose (subtract correct-output output))
           (subtract correct-output output))))))
 
@@ -363,14 +365,45 @@ pretty efficient.  Returns the shuffled version of the list."
 ;; Notice that this is different from the raw data provided in the problems below.
 ;; You can convert the raw data to this column-vector form using CONVERT-DATA
 
+#|
+c: expected output
+o: output
+h: hidden
+w: weight from hidden to outputs
+v: weights from input to hidden
+
+
+v is a matrix with (num hidden units) rows and (size of i) columns,
+initially set to random values between -(initialsize) and initialsize
+w is a matrix with (size of c) rows and (num hidden units) columns,
+initially set to random values between -(initialsize) and initialsize
+
+The forward pass rules are (in this order):
+
+h = sigmoid[v . i]
+o = sigmoid[w . h]
+|#
+
 ;; IMPLEMENT THIS FUNCTION
 
 (defun forward-propagate (datum v w)
   "Returns as a vector the output of the OUTPUT units when presented
 the datum as input."
-  )
+  (let*
+    ((i (first datum)) ;column vector of inputs
+    (h (map-m #'sigmoid (multiply v i))) ;column vector of outputs from hidden layer
+    (o (map-m #'sigmoid (multiply w h)))) ;column vector of outputs from output layer
+    return o))
 
+#|
+The backpropagation rules are (in this order):
 
+odelta = (c - o) o (1 - o)
+hdelta = (h (1 - h) (tr[w] . odelta))
+w = w + alpha (odelta . tr[h])
+v = v + alpha (hdelta . tr[i])
+
+|#
 ;; IMPLEMENT THIS FUNCTION
 
 (defun back-propagate (datum alpha v w)
@@ -380,7 +413,7 @@ returning a list consisting of new, modified V and W matrices."
   ;; let* is like let, except that it lets you initialize local
   ;; variables in the context of earlier local variables in the
   ;; same let* statement.
-  )
+  (let* ()))
 
 
 
