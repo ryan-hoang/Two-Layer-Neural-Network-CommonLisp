@@ -396,6 +396,22 @@ the datum as input."
     return o))
 
 #|
+"."  (a dot)    means matrix multiply
+As in:  C = A . B
+no dot          means element-by-element multiply -- by which we mean if C = (A) (B) , then for each index i and j, Cij = Aij * Bij
+sigmoid[]       sigmoid function applied to each element
+tr[]            transpose the matrix
+1 -             subtract from 1
+-               subtract two matrices
++               add two marices
+alpha (...)     multiply by the scalar value alpha
+
+c is the expected output vector
+i is the provided input vector
+h, c, o, i, odelta, and hdelta are all COLUMN vectors
+
+(--input-column-vector--  -- output-column-vector--)
+
 The backpropagation rules are (in this order):
 
 odelta = (c - o) o (1 - o)
