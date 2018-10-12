@@ -393,7 +393,12 @@ the datum as input."
     ((i (first datum)) ;column vector of inputs
     (h (map-m #'sigmoid (multiply v i))) ;column vector of outputs from hidden layer
     (o (map-m #'sigmoid (multiply w h)))) ;column vector of outputs from output layer
-    return o))
+    return list o))
+
+
+;;; Helper function to calculate h
+(defun get-h (datum v w)
+(map-m #'sigmoid (multiply v (first datum))))
 
 #|
 "."  (a dot)    means matrix multiply
@@ -429,7 +434,15 @@ returning a list consisting of new, modified V and W matrices."
   ;; let* is like let, except that it lets you initialize local
   ;; variables in the context of earlier local variables in the
   ;; same let* statement.
-  (let* ()))
+  (let*
+    ((o (forward-propagate datum v w))
+     (h (get-h datum v w))
+     (c (second datum))
+     (odelta (e-multiply (e-multiply (subtract c o) o) (subtract-from-scalar 1 o)))
+     (hdelta (e-multiply (e-multiply h (subtract-from-scalar 1 h)) (multiply (transpose w) odelta)))
+     (w_updated (add w (scalar-multiply alpha (multiply odelta (transpose h)))))
+     (v_updated (add v (scalar-multiply alpha (multiply hdelta (transpose i))))))
+     return (list v_updated w_updated))
 
 
 
