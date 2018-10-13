@@ -341,8 +341,7 @@ pretty efficient.  Returns the shuffled version of the list."
 
 (defun sigmoid (u)
   "Sigmoid function applied to the number u"
-  (float (/ 1 (+ 1 (exp (- u)))))
-  )
+  (float (/ 1 (+ 1 (exp (- u))))))
 
 ;; output and correct-output are both column-vectors
 
@@ -393,12 +392,13 @@ the datum as input."
     ((i (first datum)) ;column vector of inputs
     (h (map-m #'sigmoid (multiply v i))) ;column vector of outputs from hidden layer
     (o (map-m #'sigmoid (multiply w h)))) ;column vector of outputs from output layer
-    return list o))
+    o))
 
 
 ;;; Helper function to calculate h
+
 (defun get-h (datum v w)
-(map-m #'sigmoid (multiply v (first datum))))
+  (map-m #'sigmoid (multiply v (first datum))))
 
 #|
 "."  (a dot)    means matrix multiply
@@ -442,7 +442,7 @@ returning a list consisting of new, modified V and W matrices."
      (hdelta (e-multiply (e-multiply h (subtract-from-scalar 1 h)) (multiply (transpose w) odelta)))
      (w_updated (add w (scalar-multiply alpha (multiply odelta (transpose h)))))
      (v_updated (add v (scalar-multiply alpha (multiply hdelta (transpose i))))))
-     return (list v_updated w_updated))
+     (list v_updated w_updated)))
 
 
 
@@ -469,6 +469,12 @@ In any case, returns x"
 ;; Notice that this is different from the raw data provided in the problems below.
 ;; You can convert the raw data to this column-vector form using CONVERT-DATA
 
+#|
+v is a matrix with (num hidden units) rows and (size of i) columns,
+initially set to random values between -(initialsize) and initialsize
+w is a matrix with (size of c) rows and (num hidden units) columns,
+initially set to random values between -(initialsize) and initialsize
+|#
 
 ;;; IMPLEMENT THIS FUNCTION
 
@@ -492,6 +498,30 @@ is met (see below):
 
 The function should return a list of two items: the final V matrix
 and the final W matrix of the learned network."
+  (let*
+    ((v (make-random-matrix num-hidden-units (list-length (first (first data))) initial-bounds))
+    (w (make-random-matrix (list-length (first (second data))) num-hidden-units initial-bounds)))
+        (dotimes (iteration max-iterations iteration)
+            (mapcar #'(lambda (datum) ; loop over all data elements
+                (let*
+                    ((vw (back-propagate datum alpha v w)))
+                    (setf v (first vw))
+                    (setf w (second vw))))
+            (shuffle data))
+            (if (equalp (mod (+ iteration 1) modulo) 0) ; every modulo-th iteration do this stuff
+                (let*
+                    ((all-errors (mapcar #'(lambda (datum) (let* ((o (forward-propagate datum v w)) (error (net-error o (second datum)))) error)) data)) ; do forward propagate on all datums and save list of errors to all-errors
+                    (worst-error (reduce #'max all-errors)) ; Calculate worst error
+                    (mean-error (average all-errors))) ; Calculate mean error
+                    (if (equalp print-all-errors T) ((terpri) (princ "All errors:") (princ all-errors) (terpri))) ; Print all errors if print-all-errors is True
+                    (terpri) (princ "mean-error:") (princ mean-error) (terpri) ; Print mean error
+                    (princ "worst-error:") (princ worst-error) ; Print worst error
+                    (if (< worst-error *a-good-minimum-error*) (return))
+                )
+            )
+        )
+        (list v w)
+    )
   )
 
 
