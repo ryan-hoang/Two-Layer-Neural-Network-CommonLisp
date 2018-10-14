@@ -434,8 +434,10 @@ returning a list consisting of new, modified V and W matrices."
   ;; let* is like let, except that it lets you initialize local
   ;; variables in the context of earlier local variables in the
   ;; same let* statement.
+  ;;(terpri) (princ (forward-propagate datum v w))
   (let*
     ((o (forward-propagate datum v w))
+     (i (first datum))
      (h (get-h datum v w))
      (c (second datum))
      (odelta (e-multiply (e-multiply (subtract c o) o) (subtract-from-scalar 1 o)))
@@ -500,7 +502,7 @@ The function should return a list of two items: the final V matrix
 and the final W matrix of the learned network."
   (let*
     ((v (make-random-matrix num-hidden-units (list-length (first (first data))) initial-bounds))
-    (w (make-random-matrix (list-length (first (second data))) num-hidden-units initial-bounds)))
+    (w (make-random-matrix (list-length (second (first data))) num-hidden-units initial-bounds)))
         (dotimes (iteration max-iterations iteration)
             (mapcar #'(lambda (datum) ; loop over all data elements
                 (let*
@@ -510,12 +512,12 @@ and the final W matrix of the learned network."
             (shuffle data))
             (if (equalp (mod (+ iteration 1) modulo) 0) ; every modulo-th iteration do this stuff
                 (let*
-                    ((all-errors (mapcar #'(lambda (datum) (let* ((o (forward-propagate datum v w)) (error (net-error o (second datum)))) error)) data)) ; do forward propagate on all datums and save list of errors to all-errors
-                    (worst-error (reduce #'max all-errors)) ; Calculate worst error
-                    (mean-error (average all-errors))) ; Calculate mean error
-                    (if (equalp print-all-errors T) ((terpri) (princ "All errors:") (princ all-errors) (terpri))) ; Print all errors if print-all-errors is True
-                    (terpri) (princ "mean-error:") (princ mean-error) (terpri) ; Print mean error
-                    (princ "worst-error:") (princ worst-error) ; Print worst error
+                    ((all_errors (mapcar #'(lambda (datum) (let* ((o (forward-propagate datum v w)) (error (net-error o (second datum)))) error)) data)) ; do forward propagate on all datums and save list of errors to all-errors
+                    (worst-error (reduce #'max all_errors)) ; Calculate worst error
+                    (mean-error (average all_errors))) ; Calculate mean error
+                    (if (equalp print-all-errors T) (progn (terpri) (princ "All errors:") (princ all_errors) (terpri))) ; Print all errors if print-all-errors is True
+                    (progn (terpri) (princ "mean-error:") (princ mean-error) (terpri)) ; Print mean error
+                    (progn (princ "worst-error:") (princ worst-error)) ; Print worst error
                     (if (< worst-error *a-good-minimum-error*) (return))
                 )
             )
