@@ -331,11 +331,38 @@ pretty efficient.  Returns the shuffled version of the list."
   (map-m #'(lambda (elt) (- scalar elt)) matrix))
 
 
+;;;; Some useful preprocessing functions
+
+(defun scale-list (lis)
+  "Scales a list so the minimum value is 0.1 and the maximum value is 0.9.  Don't use this function, it's just used by scale-data."
+  (let ((min (reduce #'min lis))
+	(max (reduce #'max lis)))
+    (mapcar (lambda (elt) (+ 0.1 (* 0.8 (/ (- elt min) (- max min)))))
+	    lis)))
+
+(defun scale-data (lis)
+  "Scales all the attributes in a list of samples of the form ((attributes) (outputs))"
+  (transpose (list (transpose (mapcar #'scale-list (transpose (mapcar #'first lis))))
+		   (transpose (mapcar #'scale-list (transpose (mapcar #'second lis)))))))
+
+(defun convert-data (raw-data)
+  "Converts raw data into column-vector data of the form that
+can be fed into NET-LEARN.  Also adds a bias unit of 0.5 to the input."
+  (mapcar #'(lambda (datum)
+	      (mapcar #'(lambda (vec)
+			  (mapcar #'list vec))
+		      (list (cons 0.5 (first datum))
+			    (second datum))))
+	  raw-data))
+
+(defun average (lis)
+  "Computes the average over a list of numbers.  Returns 0 if the list length is 0."
+  (if (= (length lis) 0)
+      0
+      (/ (reduce #'+ lis) (length lis))))
 
 
-
-
-;;; Functions you need to implement
+;;;;;;;;;;;;; Functions you need to implement
 
 ;; IMPLEMENT THIS FUNCTION
 
@@ -392,12 +419,13 @@ the datum as input."
     ((i (first datum)) ;column vector of inputs
     (h (map-m #'sigmoid (multiply v i))) ;column vector of outputs from hidden layer
     (o (map-m #'sigmoid (multiply w h)))) ;column vector of outputs from output layer
-    o))
+  o))
 
 
 ;;; Helper function to calculate h
 
-(defun get-h (datum v w)
+(defun get-h (datum v)
+  "Calculates the outputs of the hidden layer. Helper Function"
   (map-m #'sigmoid (multiply v (first datum))))
 
 #|
@@ -438,7 +466,7 @@ returning a list consisting of new, modified V and W matrices."
   (let*
     ((o (forward-propagate datum v w))
      (i (first datum))
-     (h (get-h datum v w))
+     (h (get-h datum v))
      (c (second datum))
      (odelta (e-multiply (e-multiply (subtract c o) o) (subtract-from-scalar 1 o)))
      (hdelta (e-multiply (e-multiply h (subtract-from-scalar 1 h)) (multiply (transpose w) odelta)))
@@ -516,16 +544,35 @@ and the final W matrix of the learned network."
                     (worst-error (reduce #'max all_errors)) ; Calculate worst error
                     (mean-error (average all_errors))) ; Calculate mean error
                     (if (equalp print-all-errors T) (progn (terpri) (princ "All errors:") (princ all_errors) (terpri))) ; Print all errors if print-all-errors is True
-                    (progn (terpri) (princ "mean-error:") (princ mean-error) (terpri)) ; Print mean error
-                    (progn (princ "worst-error:") (princ worst-error)) ; Print worst error
-                    (if (< worst-error *a-good-minimum-error*) (return))
-                )
-            )
-        )
-        (list v w)
-    )
-  )
+                    (progn (princ "mean-error:") (princ mean-error) (terpri)) ; Print mean error
+                    (progn (princ "worst-error:") (princ worst-error) (terpri)) ; Print worst error
+                    (if (< worst-error *a-good-minimum-error*) (return)))))
+  (progn (terpri) (list v w))))
 
+  #|
+  ;;; some test code for you to try
+
+  ;;; you'll need to run this a couple of times before it globally converges.
+  ;;; When it *doesn't* converge what is usually happening?
+  (net-build (convert-data *nand*) 3 1.0 5 20000 1000 t)
+
+  (net-build (convert-data *xor*) 3 1.0 5 20000 1000 t)
+
+
+  ;; how well does this converge on average?  Can you modify it to do better?
+  (net-build (convert-data *voting-records*) 10 1.0 2 5000 250 t)
+
+
+  ;;; how well does this generalize usually?  Can you modify it to typically generalize better?
+  (simple-generalization *voting-records* ...)  ;; pick appropriate values
+
+  ;;; how well does this generalize usually?  Can you modify it to typically generalize better?
+  (simple-generalization *mpg* ...) ;; pick appropriate values
+
+  ;;; how well does this generalize usually?  Can you modify it to typically generalize better?
+  (simple-generalization *wine* ...)  ;; pick appropriate values
+
+  |#
 
 
 ;; For this function, you should pass in the data just like it's defined
@@ -535,7 +582,9 @@ and the final W matrix of the learned network."
 ;; the SIMPLE-GENERALIZATION function.
 ;;
 ;; Yes, this is ridiculously inconsistent.  Deal with it.  :-)
-
+;;;(defun net-build (data num-hidden-units alpha initial-bounds max-iterations modulo &optional print-all-errors)
+;;;(defun forward-propagate (datum v w)
+;;;(defun net-error (output correct-output)
 ;;; IMPLEMENT THIS FUNCTION
 
 (defun simple-generalization (data num-hidden-units alpha initial-bounds max-iterations)
@@ -543,9 +592,35 @@ and the final W matrix of the learned network."
 of the data, then tests generalization on the second half, returning
 the average error among the samples in the second half.  Don't print any errors,
 and use a modulo of MAX-ITERATIONS."
-  )
+  (let*
+      ((dataset (convert-data data))
+      (datafirsthalf (butlast dataset (round (/ (list-length dataset) 2))))
+      (datasecondhalf (last dataset (round (/ (list-length dataset) 2))))
+      (vw (net-build datafirsthalf num-hidden-units alpha initial-bounds max-iterations max-iterations nil))
+      (errorssecondhalf (mapcar #'(lambda (datum) (net-error (forward-propagate datum (first vw) (second vw)) (second datum))) datasecondhalf)))
+  (average errorssecondhalf)))
 
 
+
+
+
+
+(defun combine-parts (partlist)
+    (let*
+      ((combined '()))
+      (mapcar #'(lambda (p) (setf combined (append combined p ))) partlist)
+      combined))
+
+;(progn (princ "Fold Contents:") (princ parts) (terpri) (princ "Original data list:") (princ datalist) (terpri) (princ "Remaining items:") (princ tempdatalist))
+(defun split-into-k-parts (datalist k)
+  (let*
+      ((parts '())
+      (partsize (round (/ (list-length datalist) k)))
+      (tempdatalist (copy-list datalist)))
+    (dotimes (iteration k iteration)
+      (setf parts (append parts (list (last tempdatalist partsize))))
+      (setf tempdatalist (butlast tempdatalist partsize)))
+    parts))
 
 ;; For this function, you should pass in the data just like it's defined
 ;; in the example problems below (that is, not in the "column vector" format
@@ -554,7 +629,10 @@ and use a modulo of MAX-ITERATIONS."
 ;; the SIMPLE-GENERALIZATION function.
 ;;
 ;; Yes, this is ridiculously inconsistent.  Deal with it.  :-)
-
+;;(defun net-build (data num-hidden-units alpha initial-bounds max-iterations modulo &optional print-all-errors)
+;;(defun forward-propagate (datum v w)
+;;(defun net-error (output correct-output)
+;;(net-build (convert-data *nand*) 3 1.0 5 20000 1000 t)
 
 (defun k-fold-validation (data k num-hidden-units alpha initial-bounds max-iterations)
   "Given a set of data, performs k-fold validation on this data for
@@ -563,40 +641,20 @@ then testing generalization on the remaining 1/k of the data.  This is
 done k times for different 1/k chunks (and building k different networks).
 The average error among all tested samples is returned.  Don't print any errors,
 and use a modulo of MAX-ITERATIONS."
-  )
+  (let*
+    ((folds (split-into-k-parts data k)) ; Split the data into k chunks. The outside mapcar below will for each of the k chunks, do the following: remove that chunk, combine the remaining chunks and train a neural net with that dataset, test the neural net with the removed chunk.
+    (listoferrorsfromallneuralnetsgenerated
+        (mapcar #'(lambda (x)
+          (let*
+              ((vw (net-build (convert-data (combine-parts (remove x folds))) num-hidden-units alpha initial-bounds max-iterations max-iterations nil)) ; Build Neural Net for (k-1)/k elements of the dataset. 1/k elements are removed and used to test each time. Each iteration of the outside mapcar removes a different 1/k elements and trains a neural net with the remaining (k-1)/k elements.
+              (errors (mapcar #'(lambda (datum) (net-error (forward-propagate datum (first vw) (second vw)) (second datum))) (convert-data x)))) ; list of errors for this particular neural net calculated using the removed chunk.
+          (average errors)))
+        folds)))
+    (average listoferrorsfromallneuralnetsgenerated)))
 
 
 
 
-;;;; Some useful preprocessing functions
-
-(defun scale-list (lis)
-  "Scales a list so the minimum value is 0.1 and the maximum value is 0.9.  Don't use this function, it's just used by scale-data."
-  (let ((min (reduce #'min lis))
-	(max (reduce #'max lis)))
-    (mapcar (lambda (elt) (+ 0.1 (* 0.8 (/ (- elt min) (- max min)))))
-	    lis)))
-
-(defun scale-data (lis)
-  "Scales all the attributes in a list of samples of the form ((attributes) (outputs))"
-  (transpose (list (transpose (mapcar #'scale-list (transpose (mapcar #'first lis))))
-		   (transpose (mapcar #'scale-list (transpose (mapcar #'second lis)))))))
-
-(defun convert-data (raw-data)
-  "Converts raw data into column-vector data of the form that
-can be fed into NET-LEARN.  Also adds a bias unit of 0.5 to the input."
-  (mapcar #'(lambda (datum)
-	      (mapcar #'(lambda (vec)
-			  (mapcar #'list vec))
-		      (list (cons 0.5 (first datum))
-			    (second datum))))
-	  raw-data))
-
-(defun average (lis)
-  "Computes the average over a list of numbers.  Returns 0 if the list length is 0."
-  (if (= (length lis) 0)
-      0
-      (/ (reduce #'+ lis) (length lis))))
 
 
 ;;; here are the inputs and outputs of your three problems to test
