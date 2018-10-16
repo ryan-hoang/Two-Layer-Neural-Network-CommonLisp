@@ -1769,26 +1769,30 @@ and use a modulo of MAX-ITERATIONS."
 
 
 #|
-;;; some test code for you to try
-
-;;; you'll need to run this a couple of times before it globally converges.
-;;; When it *doesn't* converge what is usually happening?
+you'll need to run this a couple of times before it globally converges.
+When it *doesn't* converge what is usually happening?
 (net-build (convert-data *nand*) 3 1.0 5 20000 1000 t)
+When running this test, I found that the majority of times, it globally converged. When testing this, I ran this code 30 times. Out of the 30 trials 22 of them converged and 8 did not converge. I believe that in the 8 instances where this did not converge what was happening was that the error was jumping back and forth between two values. I know this because in each of those 8 instances, I could see that the worst error was oscillating between two values, alternating on each modulo iterations.
 
 (net-build (convert-data *xor*) 3 1.0 5 20000 1000 t)
+When running this test, I used the same procedure as the previous test on the nand dataset. In my testing I found that out of 30 trials, 24 of them resulted in convergence. In the 6 instances where the neural network did not converge I noticed that for the most part the worst error on each modulo iterations was no longer shrinking much like what I saw in the nand dataset. As a result, I drew the same conclusion as I did in the previous set of tests with nand. I believe that the reason the network did not converge in the 6 instances was because the network was jumping back and forth.
 
-
-;; how well does this converge on average?  Can you modify it to do better?
+how well does this converge on average?  Can you modify it to do better?
 (net-build (convert-data *voting-records*) 10 1.0 2 5000 250 t)
+In trying to test with this dataset, I was unable to get my neural network to converge. If I were to guess the reason why I would say that it is because I needed to provide more time for the neural network to converge. In my testing, I found that when I increased the number of hidden units the error started to become smaller at a faster rate however I was still unable to get the neural net to converge on this dataset. Given enough time I would keep increasing this and I would expect that it would eventually converge.
 
-
-;;; how well does this generalize usually?  Can you modify it to typically generalize better?
+how well does this generalize usually?  Can you modify it to typically generalize better?
 (simple-generalization *voting-records* ...)  ;; pick appropriate values
+When I was trying different values for testing this function I was not able to get my neural network to converge. However I saw that I got smaller error values as I increased the number of hidden units.
 
-;;; how well does this generalize usually?  Can you modify it to typically generalize better?
+how well does this generalize usually?  Can you modify it to typically generalize better?
 (simple-generalization *mpg* ...) ;; pick appropriate values
+When I was trying different values for testing this function I was not able to get my neural network to converge. However, unlike the previous voting record dataset, I did not see a huge improvement in error as I increased the number of hidden units.
 
-;;; how well does this generalize usually?  Can you modify it to typically generalize better?
+how well does this generalize usually?  Can you modify it to typically generalize better?
 (simple-generalization *wine* ...)  ;; pick appropriate values
+When I was trying different values for testing this function I was not able to get my neural network to converge. At this point I am unsure whether or not my generalization function is correct given that I am having trouble getting the network to converge.
+
+
 
 |#
